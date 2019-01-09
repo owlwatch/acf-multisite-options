@@ -49,23 +49,27 @@ class Plugin
 	public function init()
 	{
 		$acf_admin_options_page = $this->get_acf_admin_options_page();
-		if( !$acf_admin_options_page ){
-			return;
+		if( $acf_admin_options_page ){
+
+
+			// Run the ACF Options admin_menu function on network menu
+			add_action( 'network_admin_menu', [$acf_admin_options_page, 'admin_menu'], 99, 0 );
+
+			// Filter out pages by "network" attribute when loading the pages
+			// for the admin_menu depending on the context
+			add_action( 'admin_menu', [$this, 'before_admin_menu'], 1 );
+			add_action( 'network_admin_menu', [$this, 'before_admin_menu'], 1 );
+			add_filter( 'acf/get_options_pages', [$this, 'filter_options_pages'] );
+
 		}
 
-		// Run the ACF Options admin_menu function on network menu
-		add_action( 'network_admin_menu', [$acf_admin_options_page, 'admin_menu'], 99, 0 );
-
-		// Filter out pages by "network" attribute when loading the pages
-		// for the admin_menu depending on the context
-		add_action( 'admin_menu', [$this, 'before_admin_menu'], 1 );
-		add_action( 'network_admin_menu', [$this, 'before_admin_menu'], 1 );
-		add_filter( 'acf/get_options_pages', [$this, 'filter_options_pages'] );
-
-		// Filter get/set values to use multisite options if the page_id
-		// corresponds to a network page
-		add_filter( 'acf/pre_load_value', [$this, 'pre_load_value'], 10, 4 );
-		add_filter( 'acf/pre_update_value', [$this, 'pre_update_value'], 10, 4 );
+		if( function_exists( 'acf_add_options_page' ) ){
+			// Filter get/set values to use multisite options if the page_id
+			// corresponds to a network page
+			add_filter( 'acf/pre_load_value', [$this, 'pre_load_value'], 10, 4 );
+			add_filter( 'acf/pre_update_value', [$this, 'pre_update_value'], 10, 4 );
+			add_filter( 'acf/pre_load_reference', [$this, 'pre_load_reference'], 10, 3 );
+		}
 
 	}
 
@@ -203,7 +207,6 @@ class Plugin
 		$value = apply_filters( "acf/load_value/key={$field['key']}",		$value, $post_id, $field );
 		$value = apply_filters( "acf/load_value",							$value, $post_id, $field );
 
-
 		// update cache
 		acf_set_cache($cache_key, $value);
 
@@ -274,6 +277,28 @@ class Plugin
 		// return
 		return $return;
 	}
+
+
+	function pre_load_reference( $return, $field_name, $post_id ) {
+
+		$page = $this->get_options_page_by_post_id( $post_id );
+		if( !$page || empty( $page['network'] ) ){
+			return $return;
+		}
+
+		// get hidden meta for this field name
+		$reference = $this->get_metadata( $post_id, $field_name, true );
+
+		// filter
+		$reference = apply_filters('acf/load_reference', $reference, $field_name, $post_id);
+		$reference = apply_filters('acf/get_field_reference', $reference, $field_name, $post_id);
+
+		// return
+		return $reference;
+
+	}
+
+
 	/**
 	 * This is our own version of the acf_delete_value, but we are really
 	 * only using it for null values in our update_value function
