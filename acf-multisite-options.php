@@ -69,6 +69,15 @@ class Plugin
 			add_filter( 'acf/pre_load_value', [$this, 'pre_load_value'], 10, 4 );
 			add_filter( 'acf/pre_update_value', [$this, 'pre_update_value'], 10, 4 );
 			add_filter( 'acf/pre_load_reference', [$this, 'pre_load_reference'], 10, 3 );
+
+			// @TODO figure out the best way to run around all field types
+			// since format_value/type={$type} runs before all other
+			// format filters, we can't just use the acf/format_value filter
+			foreach(['image'] as $type){
+				// Wrap some fields with "switch_to_blog()" calls to retrieve images/ posts
+				add_filter( 'acf/format_value/type='.$type, [$this, 'format_value_start'], 1, 3 );
+				add_filter( 'acf/format_value/type='.$type, [$this, 'format_value_end'], 999, 3 );
+			}
 		}
 
 	}
@@ -212,6 +221,27 @@ class Plugin
 
 
 		// return
+		return $value;
+	}
+
+	public function format_value_start( $value, $post_id, $field )
+	{
+		$page = $this->get_options_page_by_post_id( $post_id );
+		if( !$page || empty( $page['network'] ) ){
+			return $return;
+		}
+		$this->current_blog = get_current_blog_id();
+		switch_to_blog( get_main_site_id() );
+		return $value;
+	}
+
+	public function format_value_end( $value, $post_id, $field )
+	{
+		$page = $this->get_options_page_by_post_id( $post_id );
+		if( !$page || empty( $page['network'] ) ){
+			return $return;
+		}
+		restore_current_blog();
 		return $value;
 	}
 
