@@ -39,7 +39,7 @@ class Plugin
 	 */
 	protected function __construct()
 	{
-		add_action( 'plugins_loaded', [$this, 'init']);
+		add_action( 'plugins_loaded', [$this, 'init'] );
 	}
 
 	/**
@@ -50,7 +50,6 @@ class Plugin
 	{
 		$acf_admin_options_page = $this->get_acf_admin_options_page();
 		if( $acf_admin_options_page ){
-
 
 			// Run the ACF Options admin_menu function on network menu
 			add_action( 'network_admin_menu', [$acf_admin_options_page, 'admin_menu'], 99, 0 );
@@ -147,7 +146,7 @@ class Plugin
 	 * @param  string $post_id the ACF post_id
 	 * @return mixed the options page or false if none found
 	 */
-	public function get_options_page_by_post_id( string $post_id )
+	public function get_options_page_by_post_id( $post_id )
 	{
 		$pages = acf_get_options_pages();
 		foreach( $pages as $page ){
@@ -172,52 +171,45 @@ class Plugin
 	 */
 	public function pre_load_value( $return, $post_id, $field )
 	{
+		if( !$post_id ){
+			return;
+		}
 		$page = $this->get_options_page_by_post_id( $post_id );
 		if( !$page || empty( $page['network'] ) ){
 			return $return;
 		}
 
-		// vars
-		$cache_key = "get_value/post_id={$post_id}/name={$field['name']}";
+		$field_name = $field['name'];
 
-
-		// return early if cache is found
-		if( acf_isset_cache($cache_key) ) {
-			return acf_get_cache($cache_key);
+		// Check store.
+		$store = acf_get_store( 'values' );
+		if( $store->has( "$post_id:$field_name" ) ) {
+			return $store->get( "$post_id:$field_name" );
 		}
 
 
-		// load value
-		$value = $this->get_metadata( $post_id, $field['name'] );
+		// Load value from database.
+		$value = $this->get_metadata( $post_id, $field_name );
 
-
-		// if value was duplicated, it may now be a serialized string!
-		$value = maybe_unserialize( $value );
-
-
-		// no value? try default_value
+		// Use field's default_value if no meta was found.
 		if( $value === null && isset($field['default_value']) ) {
 			$value = $field['default_value'];
 		}
 
-
 		/**
-		*  Filters the $value after it has been loaded.
-		*
-		*  @date	28/09/13
-		*  @since	5.0.0
-		*
-		*  @param	mixed $value The value to preview.
-		*  @param	string $post_id The post ID for this value.
-		*  @param	array $field The field array.
-		*/
-		$value = apply_filters( "acf/load_value/type={$field['type']}",		$value, $post_id, $field );
-		$value = apply_filters( "acf/load_value/name={$field['_name']}",	$value, $post_id, $field );
-		$value = apply_filters( "acf/load_value/key={$field['key']}",		$value, $post_id, $field );
-		$value = apply_filters( "acf/load_value",							$value, $post_id, $field );
+		 * Filters the $value after it has been loaded.
+		 *
+		 * @date	28/09/13
+		 * @since	5.0.0
+		 *
+		 * @param	mixed $value The value to preview.
+		 * @param	string $post_id The post ID for this value.
+		 * @param	array $field The field array.
+		 */
+		$value = apply_filters( "acf/load_value", $value, $post_id, $field );
 
-		// update cache
-		acf_set_cache($cache_key, $value);
+		// Update store.
+		$store->set( "$post_id:$field_name", $value );
 
 
 		// return
@@ -228,7 +220,7 @@ class Plugin
 	{
 		$page = $this->get_options_page_by_post_id( $post_id );
 		if( !$page || empty( $page['network'] ) ){
-			return $return;
+			return $value;
 		}
 		$this->current_blog = get_current_blog_id();
 		switch_to_blog( get_main_site_id() );
@@ -239,15 +231,14 @@ class Plugin
 	{
 		$page = $this->get_options_page_by_post_id( $post_id );
 		if( !$page || empty( $page['network'] ) ){
-			return $return;
+			return $value;
 		}
 		restore_current_blog();
 		return $value;
 	}
 
 	/**
-	 * Hook into ACF pre_load_value so we can load the value
-	 * with get_site_option if it is a network post_id.
+	 * Hook into ACF pre_update_value
 	 *
 	 * A lot of this code is duplicated from acf core to allow
 	 * for the same processing of values
@@ -260,6 +251,9 @@ class Plugin
 	 */
 	public function pre_update_value( $return, $value, $post_id, $field )
 	{
+		if( !$post_id ){
+			return $return;
+		}
 		$page = $this->get_options_page_by_post_id( $post_id );
 		if( !$page || empty( $page['network'] ) ){
 			return $return;
@@ -287,9 +281,7 @@ class Plugin
 		// allow null to delete
 		if( $value === null ) {
 			return $this->delete_value( $post_id, $field );
-
 		}
-
 
 		// update value
 		$return = $this->update_metadata( $post_id, $field['name'], $value );
@@ -298,11 +290,8 @@ class Plugin
 		// update reference
 		$this->update_metadata( $post_id, $field['name'], $field['key'], true );
 
-
 		// clear cache
-		acf_delete_cache("get_value/post_id={$post_id}/name={$field['name']}");
-		acf_delete_cache("format_value/post_id={$post_id}/name={$field['name']}");
-
+		acf_flush_value_cache( $post_id, $field['name'] );
 
 		// return
 		return $return;
@@ -310,7 +299,9 @@ class Plugin
 
 
 	function pre_load_reference( $return, $field_name, $post_id ) {
-
+		if( !$post_id ){
+			return;
+		}
 		$page = $this->get_options_page_by_post_id( $post_id );
 		if( !$page || empty( $page['network'] ) ){
 			return $return;
@@ -363,8 +354,7 @@ class Plugin
 
 
 		// clear cache
-		acf_delete_cache("get_value/post_id={$post_id}/name={$field['name']}");
-		acf_delete_cache("format_value/post_id={$post_id}/name={$field['name']}");
+		acf_flush_value_cache( $post_id, $field['name'] );
 
 		return $return;
 	}
@@ -440,8 +430,8 @@ class Plugin
 
 		// option
 		if( $info['type'] === 'option' ) {
-
 			$name = $prefix . $post_id . '_' . $name;
+
 			$return = update_site_option( $name, $value );
 
 		// meta
