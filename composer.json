@@ -1,0 +1,18 @@
+{
+  "name": "owlwatch/acf-multisite-options",
+  "version": "1.0.0",
+  "description": "ACF Multisite Options",
+  "homepage": "https://github.com/owlwatch/acf-multisite-options",
+  "type": "wordpress-plugin",
+  "authors": [
+    {
+      "name": "Mark Fabrizio",
+      "email": "fabrizim@owlwatch.com",
+      "homepage": "http://owlwatch.com/",
+      "role": "Developer"
+    }
+  ],
+  "license": [
+    "GPL-2.0-or-later"
+  ]
+}
