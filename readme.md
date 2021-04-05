@@ -1,4 +1,4 @@
-=== Plugin Name ===
+# ACF Multisite Options
 Contributors: fabrizim
 Tags: advancedcustomfields, acf, multisite
 Requires at least: 5.0.1
@@ -10,11 +10,11 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
 This plugin adds the ability to add options pages in the network admin menu.
 
-== Description ==
+## Description
 
 This plugin adds the ability to add options pages in the network admin menu.
 
-== Installation ==
+## Installation
 
 Install the plugin the normal way. Make sure that Advanced Custom Fields Pro
 is "Network Activated". Also "Network Activate" this plugin.
@@ -43,14 +43,14 @@ acf_add_options_page([
 ]);
 ```
 
-== Frequently Asked Questions ==
+## Frequently Asked Questions
 
-= Where are the values stored? =
+### Where are the values stored?
 
 The values are stored in the `sitemeta` table, allowing for access
 across all sites in the network.
 
-== Notes ==
+## Notes
 
 Field groups for the multisite options pages should be saved and loaded
 to a Network Activated plugin via [https://www.advancedcustomfields.com/resources/local-json/](ACF local JSON).
