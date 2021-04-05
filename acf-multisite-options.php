@@ -80,7 +80,7 @@ class Plugin
 		}
 
 		add_filter('acf/validate_options_page', [$this, 'capture_network_pages'], 3000 );
-		add_filter('acf/pre_load_post_id', [$this, 'convert_post_id']);
+		add_filter('acf/pre_load_post_id', [$this, 'convert_post_id'], 10, 2);
 		
 		foreach(['image'] as $type){
 			// Wrap some fields with "switch_to_blog()" calls to retrieve images/ posts
@@ -98,12 +98,12 @@ class Plugin
 		return $page;
 	}
 
-	public function convert_post_id( $post_id )
+	public function convert_post_id( $preload, $post_id )
 	{
 		if( isset( $this->_network_pages[$post_id]) ){
-			return 'site_'.$this->_current_site['id'];
+			return 'site_'.$this->_current_site->id;
 		}
-		return $post_id;
+		return $preload;
 	}
 
 	/**
