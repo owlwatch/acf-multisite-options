@@ -1,13 +1,12 @@
 # ACF Multisite Options
-
-Contributors: fabrizim
-Tags: advancedcustomfields, acf, multisite
-Requires at least: 5.0.1
-Tested up to: 5.7.9
-Requires PHP: 5.6.0
-Stable tag: 1.0
-License: GPLv2 or later
-License URI: http://www.gnu.org/licenses/gpl-2.0.html
+Contributors: fabrizim  
+Tags: advancedcustomfields, acf, multisite  
+Requires at least: 5.0.1  
+Tested up to: 5.7.9  
+Requires PHP: 5.6.0  
+Stable tag: 1.0  
+License: GPLv2 or later  
+License URI: http://www.gnu.org/licenses/gpl-2.0.html  
 
 This plugin adds the ability to add options pages in the network admin menu.
 
