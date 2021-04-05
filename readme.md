@@ -52,9 +52,8 @@ across all sites in the network.
 
 == Notes ==
 
-If this functionality was to be introduce into the ACF core, it would reduce a lot of
-redundant code in this plugin, as it is necessary to re-implement several
-of the functions surrounding getting and setting values.
-
 Field groups for the multisite options pages should be saved and loaded
 to a Network Activated plugin via [https://www.advancedcustomfields.com/resources/local-json/](ACF local JSON).
+
+Each network options page should have a unique post_id. Fields names should be
+unique across all network pages as well. 
