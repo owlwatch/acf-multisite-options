@@ -2,8 +2,8 @@
 Contributors: fabrizim  
 Tags: advancedcustomfields, acf, multisite  
 Requires at least: 5.0.1  
-Tested up to: 5.7.9  
-Requires PHP: 5.6.0  
+Tested up to: 5.7  
+Requires PHP: 7.0  
 Stable tag: 1.0  
 License: GPLv2 or later  
 License URI: http://www.gnu.org/licenses/gpl-2.0.html  
@@ -57,3 +57,12 @@ to a Network Activated plugin via [https://www.advancedcustomfields.com/resource
 
 Each network options page should have a unique post_id. Fields names should be
 unique across all network pages as well. 
+
+## Changelog
+
+### 2.0
+* Reduce acf code duplication by using the "site_" rather than imitating
+an option page
+
+### 1.0 
+* Initial Release
