@@ -58,6 +58,8 @@ to a Network Activated plugin via [https://www.advancedcustomfields.com/resource
 Each network options page should have a unique post_id. Fields names should be
 unique across all network pages as well. 
 
+`get_fields` will return all fields for the network, not just for the requested network post_id.
+
 ## Changelog
 
 ### 2.0
