@@ -82,7 +82,7 @@ class Plugin
 		add_filter('acf/validate_options_page', [$this, 'capture_network_pages'], 3000 );
 		add_filter('acf/pre_load_post_id', [$this, 'convert_post_id'], 10, 2);
 		
-		foreach(['image'] as $type){
+		foreach(['image','relationship','post_object'] as $type){
 			// Wrap some fields with "switch_to_blog()" calls to retrieve images/ posts
 			add_filter( 'acf/format_value/type='.$type, [$this, 'format_value_start'], 1, 3 );
 			add_filter( 'acf/format_value/type='.$type, [$this, 'format_value_end'], 999, 3 );
@@ -180,6 +180,24 @@ class Plugin
 			}
 		}
 		return null;
+	}
+
+	public function format_value_start( $value, $post_id, $field )
+	{
+		if( substr( $post_id, 0, 5) !== 'site_' ){
+			return $value;
+		}
+		switch_to_blog( get_main_site_id() );
+		return $value;
+	}
+
+	public function format_value_end( $value, $post_id, $field )
+	{
+		if( substr( $post_id, 0, 5) !== 'site_' ){
+			return $value;
+		}
+		restore_current_blog();
+		return $value;
 	}
 
 }
