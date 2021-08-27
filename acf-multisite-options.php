@@ -49,7 +49,7 @@ class Plugin
 	 */
 	protected function __construct()
 	{
-		add_action( 'plugins_loaded', [$this, 'init'] );
+		add_action( 'acf/init', [$this, 'init'] );
 	}
 
 	/**
