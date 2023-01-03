@@ -100,7 +100,7 @@ class Plugin
 
 	public function convert_post_id( $preload, $post_id )
 	{
-		if( isset( $this->_network_pages[$post_id]) ){
+		if( is_scalar( $post_id ) && isset( $this->_network_pages[$post_id] ) ){
 			return 'site_'.$this->_current_site->id;
 		}
 		return $preload;
