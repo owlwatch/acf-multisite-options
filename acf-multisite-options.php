@@ -4,7 +4,7 @@ Plugin Name: ACF Multisite Options
 Plugin URI: https://owlwatch.com
 Description: Allow multisite options pages
 Author: Mark Fabrizio
-Version: 2.0.0
+Version: 2.0.1
 Author URI: http://owlwatch.com/
 */
 namespace ACF\Multisite\Options;
@@ -25,12 +25,18 @@ class Plugin
 	/**
 	 * capture 'network' pages 
 	 */
-	private $_network_page = [];
+	private $_network_pages = [];
 
 	/**
 	 * cache the current site
 	 */
 	private $_current_site;
+
+	/**
+	 * field types that require a "blog id" (like image, post, etc)
+	 * @var array
+	 */
+	private $_blog_specific_field_types=[];
 
 	/**
 	 * Singleton pattern
@@ -49,7 +55,7 @@ class Plugin
 	 */
 	protected function __construct()
 	{
-		add_action( 'plugins_loaded', [$this, 'init'] );
+		add_action( 'plugins_loaded', [$this, 'init'], 1 );
 	}
 
 	/**
@@ -62,6 +68,10 @@ class Plugin
 		if( !function_exists('acf_options_page') ){
 			return;
 		}
+
+		$this->_blog_specific_field_types = apply_filters('acf/multisite/blog_specific_field_types', [
+			'post', 'relationship', 'image', 'file'
+		]);
 
 		$this->_current_site = get_current_site();
 		$acf_admin_options_page = $this->get_acf_admin_options_page();
@@ -82,11 +92,12 @@ class Plugin
 		add_filter('acf/validate_options_page', [$this, 'capture_network_pages'], 3000 );
 		add_filter('acf/pre_load_post_id', [$this, 'convert_post_id'], 10, 2);
 		
-		foreach(['image','relationship','post_object'] as $type){
-			// Wrap some fields with "switch_to_blog()" calls to retrieve images/ posts
-			add_filter( 'acf/format_value/type='.$type, [$this, 'format_value_start'], 1, 3 );
-			add_filter( 'acf/format_value/type='.$type, [$this, 'format_value_end'], 999, 3 );
-		}
+		// Wrap some fields with "switch_to_blog()" calls to retrieve images/ posts
+		add_filter( 'acf/format_value', [$this, 'format_value_start'], 1, 3 );
+		add_filter( 'acf/format_value', [$this, 'format_value_end'], 999, 3 );
+
+		// lets add an option for the blog to specify for these
+		add_action('acf/render_field_settings', [$this, 'add_blog_setting'], 10, 1);
 
 	}
 
@@ -100,7 +111,11 @@ class Plugin
 
 	public function convert_post_id( $preload, $post_id )
 	{
-		if( isset( $this->_network_pages[$post_id]) ){
+		if( is_numeric($post_id) ){
+			return $preload;
+		}
+		
+		if( $post_id && is_string($post_id) && isset( $this->_network_pages[$post_id]) ){
 			return 'site_'.$this->_current_site->id;
 		}
 		return $preload;
@@ -184,20 +199,43 @@ class Plugin
 
 	public function format_value_start( $value, $post_id, $field )
 	{
-		if( substr( $post_id, 0, 5) !== 'site_' ){
-			return $value;
+		if( !empty($field['mulitisite_blog_id']) ){
+			switch_to_blog( $field['mulitisite_blog_id'] );
 		}
-		switch_to_blog( get_main_site_id() );
 		return $value;
 	}
 
 	public function format_value_end( $value, $post_id, $field )
 	{
-		if( substr( $post_id, 0, 5) !== 'site_' ){
-			return $value;
+		if( !empty($field['mulitisite_blog_id']) ){
+			restore_current_blog();
 		}
-		restore_current_blog();
 		return $value;
+	}
+
+	public function add_blog_setting($field)
+	{
+		if( !in_array( $field['type'], $this->_blog_specific_field_types) ){
+			return;
+		}
+
+		// otherwise, lets add that setting...
+		$sites = get_sites();
+		$choices = [];
+		foreach( $sites as $site ){
+			$choices[$site->blog_id] = $site->domain.$site->path;
+		}
+
+		acf_render_field_setting( $field, array(
+			'label'			=> __('Site'),
+			'instructions'	=> '',
+			'name'			=> 'multisite_blog_id',
+			'type'			=> 'select',
+			'allow_null'	=> false,
+			'ui'			=> 1,
+			'default'		=> get_main_site_id(),
+			'choices'		=> $choices
+		), true);
 	}
 
 }
