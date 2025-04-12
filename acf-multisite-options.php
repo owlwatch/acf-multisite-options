@@ -73,7 +73,7 @@ class Plugin
 		 * Compatibility with ACF 6.4.0+
 		 * ACF 6.4.0+ has a new way of handling meta locations
 		 */
-		if( function_exists('acf_new_instance') ){
+		if( class_exists('ACF\Meta\MetaLocation') ){
 			require_once( __DIR__ . '/MetaLocation/Blog.php' );
 			// instantiate our metalocation
 			acf_new_instance('ACF\Multisite\Options\MetaLocation\Blog');
