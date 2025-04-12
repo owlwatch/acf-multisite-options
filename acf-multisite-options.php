@@ -4,7 +4,7 @@ Plugin Name: ACF Multisite Options
 Plugin URI: https://owlwatch.com
 Description: Allow multisite options pages
 Author: Mark Fabrizio
-Version: 2.0.1
+Version: 2.0.2
 Author URI: http://owlwatch.com/
 */
 namespace ACF\Multisite\Options;
