@@ -62,6 +62,12 @@ unique across all network pages as well.
 
 ## Changelog
 
+### 2.0.2
+* Implement ACF\Meta\MetaLocation for Site for ACF 6.4+ compatability
+
+### 2.0.1
+* Did not document and don't remember :)
+
 ### 2.0
 * Reduce acf code duplication by using the "site_" rather than imitating
 an option page
